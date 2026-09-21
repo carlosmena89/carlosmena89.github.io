@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Carlo Mena</title>
-  <meta name="description" content="Carlo Mena — Próximamente" />
-  <link rel="icon" href="data:," />
+  <title>Carlos Mena</title>
+  <meta name="description" content="Carlos Mena — Próximamente" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <style>
     :root {
       color-scheme: dark;
@@ -76,6 +76,7 @@
       color: #999;
       opacity: 0;
       animation: fadeInUp 0.9s ease 0.2s forwards;
+      margin-bottom: 2.5rem;
     }
 
     @keyframes fadeInUp {
@@ -101,13 +102,51 @@
       0%, 80%, 100% { opacity: 0.2; }
       40% { opacity: 1; }
     }
+
+    .social {
+      opacity: 0;
+      animation: fadeInUp 0.9s ease 0.4s forwards;
+    }
+
+    .social a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: #999;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      padding: 0.6rem 1.1rem;
+      border: 1px solid #2a2a2a;
+      border-radius: 999px;
+      transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    }
+
+    .social a:hover {
+      color: #f5f5f5;
+      border-color: #0a66c2;
+      background: rgba(10, 102, 194, 0.08);
+    }
+
+    .social svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
   </style>
 </head>
 <body>
   <div class="bg-glow"></div>
   <div class="content">
-    <h1>Carlo Mena</h1>
+    <h1>Carlos Mena</h1>
     <p class="subtitle">Coming soon<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+    <div class="social">
+      <a href="https://www.linkedin.com/in/carlos-javier-m-0b608691/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn de Carlos Mena">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>
+        <span>LinkedIn</span>
+      </a>
+    </div>
   </div>
 </body>
 </html>
