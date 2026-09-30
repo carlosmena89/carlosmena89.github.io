@@ -403,6 +403,8 @@
       min-height: 1.4em;
     }
     .now-playing b { font-weight: 400; color: var(--accent); transition: color .6s var(--ease); }
+    .now-playing .song { font-family: var(--serif); font-style: italic; font-size: .95rem; letter-spacing: 0; color: var(--ink); }
+    .now-playing .time { opacity: .7; }
 
     /* ---------- Tracklist (Sobre mí) ---------- */
     .sides {
@@ -855,14 +857,16 @@
     /* ---------------- Turntable ---------------- */
     // A home recording played through a "worn vinyl" chain built with Web Audio:
     // band-limited EQ, soft saturation, wow & flutter, surface hiss, pops and rumble.
-    const TRACK = { src: 'audio/punks-heartbeat.mp3', title: "Punk's Heartbeat" };
+    // The file is a 26 s excerpt (0:24–0:50 of the original). We loop 0:25–0:49,
+    // i.e. 1.0196 s → 25.0196 s inside the file, with a short crossfade baked in.
+    const TRACK = { src: 'audio/punks-heartbeat.mp3', artist: 'CM', title: "Punk's Heartbeat", loopStart: 1.0196, loopEnd: 25.0196 };
     const deck = $('deck');
     const nowPlaying = $('nowPlaying');
     const playBtn = $('playBtn');
     const playLabel = $('playLabel');
     const playIcon = $('playIcon');
     let playing = false, ctx = null, master = null, surface = null, music = null;
-    let trackBuffer = null, loadingTrack = null, progressTimer = null, startedAt = 0, offset = 0, runoutTimer = null;
+    let trackBuffer = null, loadingTrack = null, progressTimer = null, startedAt = 0, offset = 0;
 
     const fmt = (t) => { t = Math.max(0, Math.floor(t)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
 
@@ -870,6 +874,13 @@
       nowPlaying.innerHTML = '<b></b>';
       nowPlaying.querySelector('b').textContent = label;
       if (extra) nowPlaying.append(' · ' + extra);
+    }
+
+    function showNowPlaying(pos) {
+      nowPlaying.innerHTML = '<b></b> — <span class="song"></span> <span class="time"></span>';
+      nowPlaying.querySelector('b').textContent = TRACK.artist;
+      nowPlaying.querySelector('.song').textContent = TRACK.title;
+      nowPlaying.querySelector('.time').textContent = '· ' + fmt(pos) + ' / ' + fmt(trackBuffer.duration) + ' ↻';
     }
 
     function ensureCtx() {
@@ -889,10 +900,30 @@
         loadingTrack = fetch(TRACK.src)
           .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
           .then((ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej)))
-          .then((buf) => (trackBuffer = buf))
+          .then((buf) => (trackBuffer = makeLoop(buf, TRACK.loopStart, TRACK.loopEnd)))
           .catch((e) => { loadingTrack = null; throw e; });
       }
       return loadingTrack;
+    }
+
+    // Cut [a, b) into its own buffer and crossfade its tail with the audio that
+    // precedes `a`, so jumping from the end back to the start is seamless.
+    function makeLoop(buf, a, b) {
+      const sr = buf.sampleRate;
+      const s0 = Math.round(a * sr), s1 = Math.min(Math.round(b * sr), buf.length);
+      const len = s1 - s0;
+      const fade = Math.min(Math.round(0.04 * sr), s0, len >> 2);
+      const out = ctx.createBuffer(buf.numberOfChannels, len, sr);
+      for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+        const src = buf.getChannelData(ch), dst = out.getChannelData(ch);
+        dst.set(src.subarray(s0, s1));
+        for (let k = 0; k < fade; k++) {
+          const x = k / fade;
+          const i = len - fade + k;
+          dst[i] = dst[i] * Math.cos(x * Math.PI / 2) + src[s0 - fade + k] * Math.sin(x * Math.PI / 2);
+        }
+      }
+      return out;
     }
 
     function noiseBuffer(seconds, popRate, popAmp, hissAmp) {
@@ -947,6 +978,7 @@
       const t = ctx.currentTime;
       const src = ctx.createBufferSource();
       src.buffer = trackBuffer;
+      src.loop = true;
 
       // Wow (slow pitch drift) and flutter (fast wobble), in cents
       const wow = ctx.createOscillator(); wow.frequency.value = 0.55;
@@ -970,7 +1002,6 @@
       src.start(t, from);
       wow.start(t); flutter.start(t);
 
-      src.onended = () => { if (music && music.src === src && playing) runout(); };
       music = { src, g, wow, flutter };
       startedAt = t - from;
     }
@@ -980,7 +1011,7 @@
       const { src, g, wow, flutter } = music;
       src.onended = null;
       const t = ctx.currentTime;
-      offset = Math.min(t - startedAt, trackBuffer.duration);
+      offset = (t - startedAt) % trackBuffer.duration;
       if (spinDown) {
         // Turntable losing power: pitch and speed slide down
         src.playbackRate.cancelScheduledValues(t);
@@ -1001,40 +1032,16 @@
       clearInterval(progressTimer);
       progressTimer = setInterval(() => {
         if (!music) return;
-        setStatus(TRACK.title, fmt(ctx.currentTime - startedAt) + ' / ' + fmt(trackBuffer.duration));
+        showNowPlaying((ctx.currentTime - startedAt) % trackBuffer.duration);
       }, 250);
     }
 
-    // End of the side: the needle sits in the run-out groove, clicking once per turn
-    function runout() {
-      music = null;
-      offset = 0;
-      clearInterval(progressTimer);
-      setStatus('Fin de la cara A', 'surco final');
-      stopSurface(0.3);
-      const src = ctx.createBufferSource();
-      const len = Math.floor(ctx.sampleRate * 1.8);
-      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.01;
-      for (let k = 0; k < 90; k++) d[k] += Math.exp(-k / 10) * (k % 2 ? -0.6 : 0.6);
-      src.buffer = buf; src.loop = true;
-      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3000;
-      const g = ctx.createGain(); g.gain.value = 0.55;
-      src.connect(lp).connect(g).connect(master);
-      src.start();
-      surface = { src, g };
-      clearTimeout(runoutTimer);
-      runoutTimer = setTimeout(() => { if (playing) setPlaying(false, true); }, 7200);
-    }
-
-    function setPlaying(on, fromRunout = false) {
+    function setPlaying(on) {
       playing = on;
       deck.classList.toggle('playing', on);
       playBtn.setAttribute('aria-pressed', String(on));
       playLabel.textContent = on ? 'Parar el disco' : 'Pon el disco';
       playIcon.setAttribute('d', on ? 'M6 5h4v14H6zM14 5h4v14h-4z' : 'M7 4v16l13-8z');
-      clearTimeout(runoutTimer);
 
       if (!ensureCtx()) { setStatus('Tu navegador no tiene tocadiscos'); return; }
 
@@ -1049,17 +1056,17 @@
             const wait = Math.max(0, needleDelay - (performance.now() - t0));
             setTimeout(() => {
               if (!playing || music) return;
-              startMusic(offset >= trackBuffer.duration - 0.5 ? 0 : offset);
+              startMusic(offset % trackBuffer.duration);
               tickProgress();
             }, wait);
           })
           .catch(() => { if (playing) setStatus('Solo ruido', 'la grabación no ha cargado'); });
       } else {
         clearInterval(progressTimer);
-        stopMusic(!fromRunout && !reduceMotion);
-        stopSurface(fromRunout ? 0.3 : 0.9);
-        nowPlaying.textContent = offset > 0 && offset < (trackBuffer ? trackBuffer.duration : Infinity)
-          ? 'Pausa en ' + fmt(offset) + '. La aguja espera.'
+        stopMusic(!reduceMotion);
+        stopSurface(0.9);
+        nowPlaying.textContent = offset > 0
+          ? 'Pausa. La aguja espera.'
           : 'Silencio. También es música (pregúntale a John Cage).';
       }
     }
