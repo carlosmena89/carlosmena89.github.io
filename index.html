@@ -710,7 +710,7 @@
             </div>
           </div>
           <div class="arm" aria-hidden="true"><div class="rod"></div><div class="pivot"></div><div class="head"></div></div>
-          <div class="now-playing" id="nowPlaying" aria-live="polite">Dale al disco. No muerde.</div>
+          <div class="now-playing" id="nowPlaying" aria-live="off">Dale al disco. Está algo gastado.</div>
         </div>
       </section>
     </div>
@@ -853,71 +853,214 @@
     try { if (localStorage.getItem('noir') === '1') setNoir(true, false); } catch (_) {}
 
     /* ---------------- Turntable ---------------- */
-    const GENRES = ['Rock', 'Punk', 'Clásica'];
+    // A home recording played through a "worn vinyl" chain built with Web Audio:
+    // band-limited EQ, soft saturation, wow & flutter, surface hiss, pops and rumble.
+    const TRACK = { src: 'audio/punks-heartbeat.mp3', title: "Punk's Heartbeat" };
     const deck = $('deck');
     const nowPlaying = $('nowPlaying');
     const playBtn = $('playBtn');
     const playLabel = $('playLabel');
     const playIcon = $('playIcon');
-    let playing = false, trackI = 0, trackTimer, audio;
+    let playing = false, ctx = null, master = null, surface = null, music = null;
+    let trackBuffer = null, loadingTrack = null, progressTimer = null, startedAt = 0, offset = 0, runoutTimer = null;
 
-    function showTrack() {
-      nowPlaying.innerHTML = 'Ahora suena: <b></b>';
-      nowPlaying.querySelector('b').textContent = GENRES[trackI % GENRES.length];
-      trackI++;
+    const fmt = (t) => { t = Math.max(0, Math.floor(t)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+
+    function setStatus(label, extra = '') {
+      nowPlaying.innerHTML = '<b></b>';
+      nowPlaying.querySelector('b').textContent = label;
+      if (extra) nowPlaying.append(' · ' + extra);
     }
 
-    // Vinyl crackle, synthesized (no audio files, no copyright trouble)
-    function startCrackle() {
-      try {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        const ctx = new AC();
-        const len = ctx.sampleRate * 2;
-        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-        const data = buf.getChannelData(0);
-        for (let i = 0; i < len; i++) {
-          const hiss = (Math.random() * 2 - 1) * 0.012;
-          const pop = Math.random() < 0.0006 ? (Math.random() * 2 - 1) * 0.6 : 0;
-          data[i] = hiss + pop;
+    function ensureCtx() {
+      if (ctx) return ctx;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.value = 0.9;
+      master.connect(ctx.destination);
+      return ctx;
+    }
+
+    function loadTrack() {
+      if (trackBuffer) return Promise.resolve(trackBuffer);
+      if (!loadingTrack) {
+        loadingTrack = fetch(TRACK.src)
+          .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+          .then((ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej)))
+          .then((buf) => (trackBuffer = buf))
+          .catch((e) => { loadingTrack = null; throw e; });
+      }
+      return loadingTrack;
+    }
+
+    function noiseBuffer(seconds, popRate, popAmp, hissAmp) {
+      const len = Math.floor(ctx.sampleRate * seconds);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      let rumble = 0;
+      for (let i = 0; i < len; i++) {
+        rumble = rumble * 0.995 + (Math.random() * 2 - 1) * 0.005;
+        let v = (Math.random() * 2 - 1) * hissAmp + rumble * 0.6;
+        if (Math.random() < popRate) {
+          const amp = (Math.random() * 2 - 1) * popAmp;
+          const n = 20 + (Math.random() * 60) | 0;
+          for (let k = 0; k < n && i + k < len; k++) d[i + k] += amp * Math.exp(-k / 8);
         }
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        src.loop = true;
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.value = 2500;
-        filter.Q.value = 0.6;
-        const gain = ctx.createGain();
-        gain.gain.value = 0;
-        gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.8);
-        src.connect(filter).connect(gain).connect(ctx.destination);
-        src.start();
-        audio = { ctx, gain };
-      } catch (_) { audio = null; }
-    }
-    function stopCrackle() {
-      if (!audio) return;
-      const { ctx, gain } = audio;
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
-      setTimeout(() => ctx.close(), 500);
-      audio = null;
+        d[i] += v;
+      }
+      return buf;
     }
 
-    function setPlaying(on) {
+    function startSurface() {
+      const src = ctx.createBufferSource();
+      src.buffer = noiseBuffer(3.6, 0.00035, 0.7, 0.014); // 3.6 s = two turns at 33⅓ rpm
+      src.loop = true;
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 40;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.25);
+      src.connect(hp).connect(lp).connect(g).connect(master);
+      src.start();
+      surface = { src, g };
+    }
+
+    function stopSurface(at = 0.4) {
+      if (!surface) return;
+      const { src, g } = surface;
+      g.gain.cancelScheduledValues(ctx.currentTime);
+      g.gain.setValueAtTime(g.gain.value, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0, ctx.currentTime + at);
+      src.stop(ctx.currentTime + at + 0.05);
+      surface = null;
+    }
+
+    function saturationCurve(k) {
+      const n = 1024, c = new Float32Array(n);
+      for (let i = 0; i < n; i++) { const x = (i * 2) / n - 1; c[i] = ((1 + k) * x) / (1 + k * Math.abs(x)); }
+      return c;
+    }
+
+    function startMusic(from) {
+      const t = ctx.currentTime;
+      const src = ctx.createBufferSource();
+      src.buffer = trackBuffer;
+
+      // Wow (slow pitch drift) and flutter (fast wobble), in cents
+      const wow = ctx.createOscillator(); wow.frequency.value = 0.55;
+      const wowAmt = ctx.createGain(); wowAmt.gain.value = 9;
+      const flutter = ctx.createOscillator(); flutter.frequency.value = 6.3;
+      const flutterAmt = ctx.createGain(); flutterAmt.gain.value = 3;
+      wow.connect(wowAmt).connect(src.detune);
+      flutter.connect(flutterAmt).connect(src.detune);
+
+      // Worn-out record EQ: no deep bass, dull highs, a bit of mid honk
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 140; hp.Q.value = 0.7;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200; lp.Q.value = 0.5;
+      const mid = ctx.createBiquadFilter(); mid.type = 'peaking'; mid.frequency.value = 1400; mid.gain.value = 3.5; mid.Q.value = 0.9;
+      const sat = ctx.createWaveShaper(); sat.curve = saturationCurve(2.2); sat.oversample = '2x';
+
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.85, t + 0.9);
+
+      src.connect(hp).connect(mid).connect(lp).connect(sat).connect(g).connect(master);
+      src.start(t, from);
+      wow.start(t); flutter.start(t);
+
+      src.onended = () => { if (music && music.src === src && playing) runout(); };
+      music = { src, g, wow, flutter };
+      startedAt = t - from;
+    }
+
+    function stopMusic(spinDown) {
+      if (!music) return;
+      const { src, g, wow, flutter } = music;
+      src.onended = null;
+      const t = ctx.currentTime;
+      offset = Math.min(t - startedAt, trackBuffer.duration);
+      if (spinDown) {
+        // Turntable losing power: pitch and speed slide down
+        src.playbackRate.cancelScheduledValues(t);
+        src.playbackRate.setValueAtTime(1, t);
+        src.playbackRate.exponentialRampToValueAtTime(0.05, t + 0.9);
+        g.gain.setValueAtTime(g.gain.value, t);
+        g.gain.linearRampToValueAtTime(0, t + 0.9);
+        src.stop(t + 0.95); wow.stop(t + 0.95); flutter.stop(t + 0.95);
+      } else {
+        g.gain.setValueAtTime(g.gain.value, t);
+        g.gain.linearRampToValueAtTime(0, t + 0.15);
+        src.stop(t + 0.2); wow.stop(t + 0.2); flutter.stop(t + 0.2);
+      }
+      music = null;
+    }
+
+    function tickProgress() {
+      clearInterval(progressTimer);
+      progressTimer = setInterval(() => {
+        if (!music) return;
+        setStatus(TRACK.title, fmt(ctx.currentTime - startedAt) + ' / ' + fmt(trackBuffer.duration));
+      }, 250);
+    }
+
+    // End of the side: the needle sits in the run-out groove, clicking once per turn
+    function runout() {
+      music = null;
+      offset = 0;
+      clearInterval(progressTimer);
+      setStatus('Fin de la cara A', 'surco final');
+      stopSurface(0.3);
+      const src = ctx.createBufferSource();
+      const len = Math.floor(ctx.sampleRate * 1.8);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.01;
+      for (let k = 0; k < 90; k++) d[k] += Math.exp(-k / 10) * (k % 2 ? -0.6 : 0.6);
+      src.buffer = buf; src.loop = true;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3000;
+      const g = ctx.createGain(); g.gain.value = 0.55;
+      src.connect(lp).connect(g).connect(master);
+      src.start();
+      surface = { src, g };
+      clearTimeout(runoutTimer);
+      runoutTimer = setTimeout(() => { if (playing) setPlaying(false, true); }, 7200);
+    }
+
+    function setPlaying(on, fromRunout = false) {
       playing = on;
       deck.classList.toggle('playing', on);
       playBtn.setAttribute('aria-pressed', String(on));
       playLabel.textContent = on ? 'Parar el disco' : 'Pon el disco';
       playIcon.setAttribute('d', on ? 'M6 5h4v14H6zM14 5h4v14h-4z' : 'M7 4v16l13-8z');
-      clearInterval(trackTimer);
+      clearTimeout(runoutTimer);
+
+      if (!ensureCtx()) { setStatus('Tu navegador no tiene tocadiscos'); return; }
+
       if (on) {
-        startCrackle();
-        setTimeout(showTrack, reduceMotion ? 0 : 700);
-        trackTimer = setInterval(showTrack, 4200);
+        if (ctx.state === 'suspended') ctx.resume();
+        startSurface();
+        setStatus('Bajando la aguja…');
+        const needleDelay = reduceMotion ? 0 : 1100;
+        const t0 = performance.now();
+        loadTrack()
+          .then(() => {
+            const wait = Math.max(0, needleDelay - (performance.now() - t0));
+            setTimeout(() => {
+              if (!playing || music) return;
+              startMusic(offset >= trackBuffer.duration - 0.5 ? 0 : offset);
+              tickProgress();
+            }, wait);
+          })
+          .catch(() => { if (playing) setStatus('Solo ruido', 'la grabación no ha cargado'); });
       } else {
-        stopCrackle();
-        nowPlaying.textContent = 'Silencio. También es música (pregúntale a John Cage).';
+        clearInterval(progressTimer);
+        stopMusic(!fromRunout && !reduceMotion);
+        stopSurface(fromRunout ? 0.3 : 0.9);
+        nowPlaying.textContent = offset > 0 && offset < (trackBuffer ? trackBuffer.duration : Infinity)
+          ? 'Pausa en ' + fmt(offset) + '. La aguja espera.'
+          : 'Silencio. También es música (pregúntale a John Cage).';
       }
     }
     const togglePlay = () => setPlaying(!playing);
