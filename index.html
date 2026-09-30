@@ -4,149 +4,1034 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Carlos Mena</title>
-  <meta name="description" content="Carlos Mena — Próximamente" />
+  <meta name="description" content="Música, libros, cómics, fotos, IA y software." />
+  <meta name="theme-color" content="#f3eee4" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://carlosmena.es/" />
+  <meta property="og:title" content="Carlos Mena" />
+  <meta property="og:description" content="Música, libros, cómics, fotos, IA y software." />
+  <meta name="twitter:card" content="summary" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+
   <style>
     :root {
-      color-scheme: dark;
+      --paper: #f3eee4;
+      --paper-2: #ebe4d6;
+      --ink: #1b1815;
+      --ink-soft: #5b544b;
+      --rule: #d6ccba;
+      --accent: #c2362b;
+      --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+      --sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+      --ease: cubic-bezier(.2,.7,.2,1);
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    html.noir {
+      --paper: #0e0e0e;
+      --paper-2: #171717;
+      --ink: #ecebe8;
+      --ink-soft: #9a9894;
+      --rule: #2b2b2b;
+      --accent: #e8e6e1;
     }
 
-    html, body {
-      height: 100%;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      background: #0a0a0a;
-      color: #f5f5f5;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-weight: 400;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color .6s var(--ease), color .6s var(--ease);
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--accent); color: var(--paper); }
+
+    a { color: inherit; }
+
+    /* ---------- Film grain + noir blinds ---------- */
+    .grain {
+      position: fixed;
+      inset: -50%;
+      z-index: 50;
+      pointer-events: none;
+      opacity: .07;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      animation: grain 1.2s steps(6) infinite;
+    }
+    html.noir .grain { opacity: .12; }
+
+    @keyframes grain {
+      0%   { transform: translate(0, 0); }
+      20%  { transform: translate(-3%, 2%); }
+      40%  { transform: translate(2%, -3%); }
+      60%  { transform: translate(-2%, -1%); }
+      80%  { transform: translate(3%, 3%); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .blinds {
+      position: fixed;
+      inset: -20%;
+      z-index: 40;
+      pointer-events: none;
+      opacity: 0;
+      transform: rotate(-14deg);
+      background: repeating-linear-gradient(180deg, rgba(255,255,255,0) 0 46px, rgba(255,255,255,.035) 46px 82px);
+      -webkit-mask-image: radial-gradient(ellipse at 70% 30%, #000 0%, transparent 70%);
+              mask-image: radial-gradient(ellipse at 70% 30%, #000 0%, transparent 70%);
+      transition: opacity 1.2s var(--ease);
+    }
+    html.noir .blinds { opacity: 1; }
+
+    /* ---------- Layout ---------- */
+    .wrap { width: min(1100px, calc(100% - 3rem)); margin: 0 auto; }
+
+    header.top {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      background: color-mix(in srgb, var(--paper) 80%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--rule) 60%, transparent);
+      transition: background-color .6s var(--ease), border-color .6s var(--ease);
+    }
+
+    header.top .wrap {
       display: flex;
       align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
+      justify-content: space-between;
+      height: 64px;
     }
 
-    .bg-glow {
-      position: absolute;
-      width: 60vw;
-      height: 60vw;
-      max-width: 700px;
-      max-height: 700px;
-      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 70%);
-      border-radius: 50%;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      animation: pulse 6s ease-in-out infinite;
+    .logo {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 500;
+      font-size: 1.35rem;
+      text-decoration: none;
+      letter-spacing: -.01em;
     }
+    .logo span { color: var(--accent); transition: color .6s var(--ease); }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+    nav.menu { display: flex; align-items: center; gap: 1.6rem; }
+
+    nav.menu a {
+      font-size: .82rem;
+      letter-spacing: .06em;
+      text-decoration: none;
+      color: var(--ink-soft);
+      transition: color .2s ease;
     }
+    nav.menu a:hover { color: var(--ink); }
 
-    .content {
-      position: relative;
-      text-align: center;
-      padding: 2rem;
-      z-index: 1;
-    }
-
-    h1 {
-      font-size: clamp(2rem, 6vw, 3.5rem);
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      margin-bottom: 1rem;
-      opacity: 0;
-      animation: fadeInUp 0.9s ease forwards;
-    }
-
-    p.subtitle {
-      font-size: clamp(0.95rem, 2.2vw, 1.15rem);
-      font-weight: 300;
-      letter-spacing: 0.35em;
+    .noir-toggle {
+      font-family: var(--sans);
+      font-size: .75rem;
+      letter-spacing: .12em;
       text-transform: uppercase;
-      color: #999;
-      opacity: 0;
-      animation: fadeInUp 0.9s ease 0.2s forwards;
-      margin-bottom: 2.5rem;
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .dots span {
-      display: inline-block;
-      animation: blink 1.4s infinite;
-    }
-
-    .dots span:nth-child(2) { animation-delay: 0.2s; }
-    .dots span:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes blink {
-      0%, 80%, 100% { opacity: 0.2; }
-      40% { opacity: 1; }
-    }
-
-    .social {
-      opacity: 0;
-      animation: fadeInUp 0.9s ease 0.4s forwards;
-    }
-
-    .social a {
+      padding: .45rem .85rem;
+      border-radius: 999px;
+      border: 1px solid var(--ink);
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.55rem;
-      color: #999;
+      gap: .45rem;
+      transition: background .25s ease, color .25s ease;
+    }
+    .noir-toggle:hover { background: var(--ink); color: var(--paper); }
+    .noir-toggle svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+    }
+    .eyebrow::before {
+      content: '';
+      width: 28px;
+      height: 1px;
+      background: var(--accent);
+      transition: background .6s var(--ease);
+    }
+
+    section { padding: 7rem 0; border-top: 1px solid var(--rule); transition: border-color .6s var(--ease); }
+
+    h2 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
+      line-height: 1.08;
+      letter-spacing: -.02em;
+      margin: 1rem 0 3rem;
+      max-width: 18ch;
+    }
+    h2 em { color: var(--accent); transition: color .6s var(--ease); }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      align-items: center;
+      gap: 3rem;
+      padding: 4rem 0 5rem;
+      border-top: none;
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-weight: 350;
+      font-size: clamp(2rem, 4.2vw, 3.1rem);
+      line-height: 1.05;
+      letter-spacing: -.025em;
+      margin: 1.2rem 0 1.6rem;
+    }
+    .hero h1 em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+      transition: color .6s var(--ease);
+    }
+
+    .hero p.lead {
+      font-family: var(--serif);
+      font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+      line-height: 1.55;
+      color: var(--ink-soft);
+      max-width: 34ch;
+    }
+
+    .hero .cta {
+      margin-top: 2.4rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      font-size: .85rem;
+      letter-spacing: .04em;
       text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 300;
-      letter-spacing: 0.08em;
-      padding: 0.6rem 1.1rem;
-      border: 1px solid #2a2a2a;
+      padding: .8rem 1.3rem;
       border-radius: 999px;
-      transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: transform .25s var(--ease), background .25s ease, color .25s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn.ghost { background: transparent; color: var(--ink); }
+    .btn.ghost:hover { background: var(--ink); color: var(--paper); }
+    .btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+    /* ---------- Turntable ---------- */
+    .deck {
+      position: relative;
+      width: min(420px, 80vw);
+      aspect-ratio: 1;
+      justify-self: center;
     }
 
-    .social a:hover {
-      color: #f5f5f5;
-      border-color: #0a66c2;
-      background: rgba(10, 102, 194, 0.08);
+    .record {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, transparent 0 31%, rgba(255,255,255,.04) 31.5% 32%, transparent 32.5%),
+        repeating-radial-gradient(circle at center, #151515 0 2px, #1d1d1d 2px 3px),
+        #111;
+      box-shadow: 0 30px 60px -20px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.4);
+      cursor: pointer;
+      animation: spin 1.8s linear infinite;
+      animation-play-state: paused;
     }
+    .record::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(from 20deg, transparent 0 10%, rgba(255,255,255,.10) 14%, transparent 20% 55%, rgba(255,255,255,.08) 62%, transparent 68%);
+      mix-blend-mode: screen;
+    }
+    .deck.playing .record { animation-play-state: running; }
 
-    .social svg {
-      width: 16px;
-      height: 16px;
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .label {
+      position: absolute;
+      inset: 29%;
+      border-radius: 50%;
+      color: #f6efe2;
+      background:
+        radial-gradient(circle at 32% 28%, rgba(255,255,255,.28), rgba(255,255,255,0) 45%),
+        repeating-conic-gradient(from 0deg, rgba(0,0,0,.14) 0 5deg, rgba(0,0,0,0) 5deg 10deg),
+        radial-gradient(circle, #e0473a 0%, var(--accent) 55%, #8f2219 100%);
+      box-shadow:
+        0 0 0 3px #111,
+        0 0 0 5px color-mix(in srgb, var(--accent) 55%, #111),
+        inset 0 0 18px rgba(0,0,0,.45);
+      overflow: hidden;
+      transition: background .6s var(--ease), box-shadow .6s var(--ease);
+    }
+    html.noir .label {
+      color: #0e0e0e;
+      background:
+        radial-gradient(circle at 32% 28%, rgba(255,255,255,.6), rgba(255,255,255,0) 45%),
+        repeating-conic-gradient(from 0deg, rgba(0,0,0,.10) 0 5deg, rgba(0,0,0,0) 5deg 10deg),
+        radial-gradient(circle, #f4f2ee 0%, #d9d6cf 60%, #a9a59c 100%);
+      box-shadow: 0 0 0 3px #111, 0 0 0 5px #555, inset 0 0 18px rgba(0,0,0,.35);
+    }
+    .label svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .label .ring-text {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
       fill: currentColor;
+    }
+    .label .rule { fill: none; stroke: currentColor; stroke-width: .8; opacity: .55; }
+    .label .rule.dash { stroke-dasharray: 1.5 4; opacity: .8; }
+    .label .big {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 600;
+      font-size: 38px;
+      fill: currentColor;
+    }
+    .label .star { fill: currentColor; }
+    .label .tiny {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 2px;
+      fill: currentColor;
+      opacity: .85;
+    }
+    .label::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 8%;
+      height: 8%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle, #d8d2c4 0 40%, #8d8677 41% 100%);
+      box-shadow: 0 0 0 2px rgba(0,0,0,.35);
+    }
+    .deck:hover .label { filter: saturate(1.15) brightness(1.05); }
+
+    .arm {
+      position: absolute;
+      top: -4%;
+      right: -6%;
+      width: 12%;
+      height: 70%;
+      transform-origin: 50% 8%;
+      transform: rotate(-28deg);
+      transition: transform .9s var(--ease);
+      pointer-events: none;
+    }
+    .deck.playing .arm { transform: rotate(-4deg); }
+    .arm .pivot {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 60%;
+      aspect-ratio: 1;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: #bdb6a8;
+      box-shadow: inset 0 -3px 6px rgba(0,0,0,.25);
+    }
+    .arm .rod {
+      position: absolute;
+      top: 6%;
+      left: 50%;
+      width: 5px;
+      height: 84%;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, #a9a296, #d9d3c6, #a9a296);
+      border-radius: 3px;
+    }
+    .arm .head {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 34%;
+      height: 12%;
+      transform: translateX(-50%) rotate(12deg);
+      background: #2a2724;
+      border-radius: 3px;
+    }
+
+    .now-playing {
+      position: absolute;
+      left: 50%;
+      bottom: -3.6rem;
+      transform: translateX(-50%);
+      width: 120%;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: .75rem;
+      letter-spacing: .06em;
+      color: var(--ink-soft);
+      min-height: 1.4em;
+    }
+    .now-playing b { font-weight: 400; color: var(--accent); transition: color .6s var(--ease); }
+
+    /* ---------- Tracklist (Sobre mí) ---------- */
+    .sides {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+    }
+
+    .side h3 {
+      font-family: var(--mono);
+      font-weight: 400;
+      font-size: .75rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      padding-bottom: .9rem;
+      margin-bottom: .4rem;
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .track {
+      display: grid;
+      grid-template-columns: 2.6rem 1fr auto;
+      gap: 1rem;
+      align-items: baseline;
+      padding: 1.15rem 0;
+      border-bottom: 1px solid var(--rule);
+      transition: padding .3s var(--ease), border-color .6s var(--ease);
+    }
+    .track:hover { padding-left: .6rem; }
+    .track .n { font-family: var(--mono); font-size: .75rem; color: var(--accent); transition: color .6s var(--ease); }
+    .track .ti { font-family: var(--serif); font-size: 1.3rem; line-height: 1.2; }
+    .track .d  { font-family: var(--mono); font-size: .72rem; color: var(--ink-soft); }
+    .track .note {
+      grid-column: 2 / 4;
+      font-size: .92rem;
+      color: var(--ink-soft);
+      margin-top: .2rem;
+    }
+
+    /* ---------- Cuaderno ---------- */
+    .notes { list-style: none; }
+    .notes li {
+      display: grid;
+      grid-template-columns: 7rem 1fr auto;
+      gap: 1.5rem;
+      align-items: baseline;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--rule);
+      transition: border-color .6s var(--ease);
+    }
+    .notes li:first-child { border-top: 1px solid var(--rule); }
+    .notes .tag {
+      font-family: var(--mono);
+      font-size: .7rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+    .notes .title {
+      font-family: var(--serif);
+      font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .notes .soon {
+      font-family: var(--mono);
+      font-size: .68rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      padding: .2rem .6rem;
+      white-space: nowrap;
+      transition: color .6s var(--ease);
+    }
+    .notes-intro { max-width: 52ch; color: var(--ink-soft); margin: -1.5rem 0 2.5rem; font-family: var(--serif); font-size: 1.1rem; }
+
+    /* ---------- Fotos (film strip) ---------- */
+    .strip {
+      background: #141414;
+      border-radius: 6px;
+      padding: 26px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .strip::before, .strip::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 12px;
+      background: repeating-linear-gradient(90deg, transparent 0 14px, #f3eee4 14px 26px, transparent 26px 40px);
+      opacity: .85;
+    }
+    .strip::before { top: 7px; }
+    .strip::after { bottom: 7px; }
+    .strip-track {
+      display: flex;
+      gap: 14px;
+      width: max-content;
+      animation: roll 40s linear infinite;
+    }
+    .strip:hover .strip-track { animation-play-state: paused; }
+    @keyframes roll { to { transform: translateX(-50%); } }
+
+    .frame {
+      width: 220px;
+      aspect-ratio: 3 / 2;
+      border-radius: 2px;
+      background: linear-gradient(135deg, #2a1d17, #3b2a22 40%, #1d1512);
+      display: grid;
+      place-items: center;
+      color: #a8877a;
+      font-family: var(--mono);
+      font-size: .68rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      position: relative;
+    }
+    .frame::after {
+      content: attr(data-n);
+      position: absolute;
+      bottom: 6px;
+      right: 8px;
+      font-size: .6rem;
+      color: #c9a227;
+      opacity: .7;
+    }
+    .photos-note { margin-top: 1.4rem; color: var(--ink-soft); font-family: var(--serif); font-style: italic; }
+
+    /* ---------- Contacto / footer ---------- */
+    .contact h2 { max-width: 22ch; }
+    .contact .links { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    footer {
+      border-top: 1px solid var(--rule);
+      padding: 2rem 0 3rem;
+      font-size: .8rem;
+      color: var(--ink-soft);
+      transition: border-color .6s var(--ease);
+    }
+    footer .wrap { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    footer kbd {
+      font-family: var(--mono);
+      font-size: .72rem;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 0 .35em;
+    }
+    footer button {
+      background: none;
+      border: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+    footer button:hover { color: var(--ink); }
+
+    /* ---------- Noir narrator toast ---------- */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 2rem;
+      z-index: 60;
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      max-width: min(520px, calc(100% - 2rem));
+      padding: 1rem 1.3rem;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 1.02rem;
+      line-height: 1.45;
+      border-radius: 10px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.25);
+      pointer-events: none;
+      transition: opacity .4s var(--ease), transform .4s var(--ease);
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    /* ---------- Reveal on scroll ---------- */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    .hero .reveal:nth-child(2) { transition-delay: .1s; }
+    .hero .reveal:nth-child(3) { transition-delay: .2s; }
+    .hero .reveal:nth-child(4) { transition-delay: .3s; }
+
+    /* ---------- Terminal (easter egg) ---------- */
+    .term {
+      position: fixed;
+      z-index: 70;
+      left: 50%;
+      bottom: 2rem;
+      width: min(680px, calc(100vw - 2rem));
+      height: min(400px, 60vh);
+      display: flex;
+      flex-direction: column;
+      background: rgba(14,14,16,.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid #2c2c30;
+      border-radius: 12px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.5);
+      font-family: var(--mono);
+      font-size: .82rem;
+      line-height: 1.55;
+      color: #d4d4d4;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 16px) scale(.98);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .term.open { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); }
+    .term-bar { display: flex; gap: .45rem; padding: .6rem .8rem; border-bottom: 1px solid #222; align-items: center; }
+    .term-bar i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+    .term-bar i:nth-child(1) { background: #ff5f57; cursor: pointer; }
+    .term-bar i:nth-child(2) { background: #febc2e; }
+    .term-bar i:nth-child(3) { background: #28c840; }
+    .term-bar span { flex: 1; text-align: center; color: #666; font-size: .72rem; margin-right: 45px; }
+    .term-body { flex: 1; overflow-y: auto; padding: .8rem 1rem 1rem; cursor: text; }
+    .term-out div { white-space: pre-wrap; word-break: break-word; }
+    .term-out .cmd { color: #f5f5f5; }
+    .term-out .err { color: #ff7b72; }
+    .term-out .ok  { color: #7ee787; }
+    .term-out .dim { color: #777; }
+    .term-out .acc { color: #f0a58f; }
+    .term-line { display: flex; gap: .6em; }
+    .term-line .p { color: #7ee787; }
+    .term-line input { flex: 1; background: transparent; border: none; outline: none; color: #f5f5f5; font: inherit; caret-color: #f0a58f; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; text-align: left; padding-top: 3rem; gap: 5rem; }
+      .deck { width: min(320px, 78vw); margin-bottom: 3rem; }
+      .sides { grid-template-columns: 1fr; gap: 3rem; }
+      nav.menu a { display: none; }
+    }
+    @media (max-width: 560px) {
+      .notes li { grid-template-columns: 1fr; gap: .4rem; }
+      .notes .soon { justify-self: start; }
+      section { padding: 5rem 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition-duration: .001ms !important; }
+      .reveal { opacity: 1; transform: none; }
     }
   </style>
 </head>
 <body>
-  <div class="bg-glow"></div>
-  <div class="content">
-    <h1>Carlos Mena</h1>
-    <p class="subtitle">Coming soon<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
-    <div class="social">
-      <a href="https://www.linkedin.com/in/carlos-javier-m-0b608691/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn de Carlos Mena">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>
-        <span>LinkedIn</span>
-      </a>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="blinds" aria-hidden="true"></div>
+
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="#" aria-label="Inicio">CM<span>.</span></a>
+      <nav class="menu" aria-label="Principal">
+        <a href="#sobre-mi">Sobre mí</a>
+        <a href="#cuaderno">Cuaderno</a>
+        <a href="#contacto">Contacto</a>
+        <button class="noir-toggle" id="noirToggle" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15.5c0-.8 2.2-1.6 5.4-2l.9-5.6C9.6 6 10.6 5 12 5s2.4 1 2.7 2.9l.9 5.6c3.2.4 5.4 1.2 5.4 2 0 1.4-4 2.5-9 2.5s-9-1.1-9-2.5z"/></svg>
+          <span>Modo noir</span>
+        </button>
+      </nav>
     </div>
-  </div>
+  </header>
+
+  <main>
+    <!-- ===================== HERO ===================== -->
+    <div class="wrap">
+      <section class="hero">
+        <div>
+          <div class="eyebrow reveal">Cara A · Pista 1</div>
+          <h1 class="reveal">Carlos <em>Mena.</em></h1>
+          <div class="cta reveal">
+            <button class="btn" id="playBtn" type="button" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4v16l13-8z"/></svg>
+              <span id="playLabel">Pon el disco</span>
+            </button>
+            <a class="btn ghost" href="#sobre-mi">Ver la tracklist</a>
+          </div>
+        </div>
+
+        <div class="deck reveal" id="deck">
+          <div class="record" id="record" role="button" tabindex="0" aria-label="Poner o parar el disco">
+            <div class="label" aria-hidden="true">
+              <svg viewBox="0 0 200 200">
+                <defs>
+                  <path id="ringPath" d="M100,100 m-80,0 a80,80 0 1,1 160,0 a80,80 0 1,1 -160,0" />
+                </defs>
+                <circle class="rule" cx="100" cy="100" r="93" />
+                <circle class="rule dash" cx="100" cy="100" r="68" />
+                <text class="ring-text"><textPath href="#ringPath" startOffset="0">Rock ★ Punk ★ Clásica ★ Novela negra ★ Ciencia ficción ★ Cómics ★</textPath></text>
+                <text class="big" x="100" y="80" text-anchor="middle">A</text>
+                <text class="tiny" x="62" y="104" text-anchor="middle">33⅓</text>
+                <text class="tiny" x="138" y="104" text-anchor="middle">RPM</text>
+                <path class="star" d="M100 126 l2 4.4 4.8.5-3.6 3.2 1 4.7-4.2-2.4-4.2 2.4 1-4.7-3.6-3.2 4.8-.5z" />
+                <text class="tiny" x="100" y="154" text-anchor="middle">ESTÉREO</text>
+              </svg>
+            </div>
+          </div>
+          <div class="arm" aria-hidden="true"><div class="rod"></div><div class="pivot"></div><div class="head"></div></div>
+          <div class="now-playing" id="nowPlaying" aria-live="polite">Dale al disco. No muerde.</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===================== SOBRE MÍ ===================== -->
+    <section id="sobre-mi">
+      <div class="wrap">
+        <div class="eyebrow reveal">Sobre mí</div>
+        <h2 class="reveal">Una tracklist en lugar de <em>una biografía.</em></h2>
+
+        <div class="sides">
+          <div class="side reveal">
+            <h3>Cara A — Ruido</h3>
+            <div class="track"><span class="n">A1</span><span class="ti">Rock &amp; punk</span><span class="d">2:14</span></div>
+            <div class="track"><span class="n">A2</span><span class="ti">Música clásica</span><span class="d">47:30</span></div>
+            <div class="track"><span class="n">A3</span><span class="ti">Conciertos</span><span class="d">en directo</span></div>
+            <div class="track"><span class="n">A4</span><span class="ti">Fotografía</span><span class="d">1/125 s</span></div>
+          </div>
+
+          <div class="side reveal">
+            <h3>Cara B — Silencio</h3>
+            <div class="track"><span class="n">B1</span><span class="ti">Novela negra</span><span class="d">B/N</span></div>
+            <div class="track"><span class="n">B2</span><span class="ti">Ciencia ficción</span><span class="d">2049</span></div>
+            <div class="track"><span class="n">B3</span><span class="ti">Cómics</span><span class="d">n.º 1</span></div>
+            <div class="track"><span class="n">B4</span><span class="ti">IA &amp; software</span><span class="d">bonus track</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===================== CUADERNO ===================== -->
+    <section id="cuaderno">
+      <div class="wrap">
+        <div class="eyebrow reveal">Cuaderno</div>
+        <h2 class="reveal">Próximamente, <em>por escrito.</em></h2>
+        <p class="notes-intro reveal">Sin fecha de salida, como los buenos discos.</p>
+
+        <ul class="notes">
+          <li class="reveal"><span class="tag">01</span><span class="title">Inteligencia artificial</span><span class="soon">Próximamente</span></li>
+          <li class="reveal"><span class="tag">02</span><span class="title">Desarrollo de software</span><span class="soon">Próximamente</span></li>
+          <li class="reveal"><span class="tag">03</span><span class="title">Música</span><span class="soon">Próximamente</span></li>
+          <li class="reveal"><span class="tag">04</span><span class="title">Libros y cómics</span><span class="soon">Próximamente</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== FOTOS ===================== -->
+    <section id="fotos">
+      <div class="wrap">
+        <div class="eyebrow reveal">Fotos</div>
+        <h2 class="reveal">Carrete <em>en el cuarto oscuro.</em></h2>
+      </div>
+      <div class="strip reveal" aria-label="Carrete de fotos, próximamente">
+        <div class="strip-track" id="stripTrack"></div>
+      </div>
+      <div class="wrap"><p class="photos-note reveal">Revelando. Paciencia: lo bueno tarda, y el químico huele fatal.</p></div>
+    </section>
+
+    <!-- ===================== CONTACTO ===================== -->
+    <section id="contacto" class="contact">
+      <div class="wrap">
+        <div class="eyebrow reveal">Cara B · Última pista</div>
+        <h2 class="reveal">¿Hablamos de discos, libros o <em>del fin del mundo por IA?</em></h2>
+        <div class="links reveal">
+          <a class="btn" href="https://www.linkedin.com/in/carlos-javier-m-0b608691/" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>
+            LinkedIn
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© <span id="year">2026</span> · Hecho a mano.</span>
+      <button type="button" id="termHint">psst… pulsa <kbd>º</kbd></button>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <section class="term" id="term" role="dialog" aria-label="Terminal" aria-hidden="true">
+    <div class="term-bar"><i id="termClose" title="Cerrar"></i><i></i><i></i><span>visitante@trastienda: ~</span></div>
+    <div class="term-body" id="termBody">
+      <div class="term-out" id="termOut"></div>
+      <div class="term-line"><span class="p">visitante:~$</span><input id="termIn" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Comando" /></div>
+    </div>
+  </section>
+
+  <script>
+  (() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = (id) => document.getElementById(id);
+    $('year').textContent = new Date().getFullYear();
+
+    /* ---------------- Reveal on scroll ---------------- */
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+    /* ---------------- Toast ---------------- */
+    const toast = $('toast');
+    let toastTimer;
+    function say(msg, ms = 3800) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), ms);
+    }
+
+    /* ---------------- Noir mode ---------------- */
+    const NOIR_LINES = [
+      'Era una noche oscura. La web, también.',
+      'Entró en la página como entran los problemas: sin llamar.',
+      'La ciudad dormía. El CSS, no.',
+      'Llovía sobre la ciudad. Y sobre el código heredado.',
+      'Nadie en esta ciudad es inocente. Y menos el JavaScript.',
+    ];
+    const DAY_LINES = [
+      'Amanece. El detective se va a dormir.',
+      'Vuelve la luz. El caso sigue abierto.',
+      'Buenos días. Nadie ha visto nada.',
+    ];
+    const noirBtn = $('noirToggle');
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    let noirI = 0, dayI = 0;
+
+    function setNoir(on, announce = true) {
+      document.documentElement.classList.toggle('noir', on);
+      noirBtn.setAttribute('aria-pressed', String(on));
+      noirBtn.querySelector('span').textContent = on ? 'Modo día' : 'Modo noir';
+      themeMeta.setAttribute('content', on ? '#0e0e0e' : '#f3eee4');
+      try { localStorage.setItem('noir', on ? '1' : '0'); } catch (_) {}
+      if (announce) say(on ? NOIR_LINES[noirI++ % NOIR_LINES.length] : DAY_LINES[dayI++ % DAY_LINES.length]);
+    }
+    noirBtn.addEventListener('click', () => setNoir(!document.documentElement.classList.contains('noir')));
+    try { if (localStorage.getItem('noir') === '1') setNoir(true, false); } catch (_) {}
+
+    /* ---------------- Turntable ---------------- */
+    const GENRES = ['Rock', 'Punk', 'Clásica'];
+    const deck = $('deck');
+    const nowPlaying = $('nowPlaying');
+    const playBtn = $('playBtn');
+    const playLabel = $('playLabel');
+    const playIcon = $('playIcon');
+    let playing = false, trackI = 0, trackTimer, audio;
+
+    function showTrack() {
+      nowPlaying.innerHTML = 'Ahora suena: <b></b>';
+      nowPlaying.querySelector('b').textContent = GENRES[trackI % GENRES.length];
+      trackI++;
+    }
+
+    // Vinyl crackle, synthesized (no audio files, no copyright trouble)
+    function startCrackle() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        const ctx = new AC();
+        const len = ctx.sampleRate * 2;
+        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) {
+          const hiss = (Math.random() * 2 - 1) * 0.012;
+          const pop = Math.random() < 0.0006 ? (Math.random() * 2 - 1) * 0.6 : 0;
+          data[i] = hiss + pop;
+        }
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.loop = true;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 2500;
+        filter.Q.value = 0.6;
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.8);
+        src.connect(filter).connect(gain).connect(ctx.destination);
+        src.start();
+        audio = { ctx, gain };
+      } catch (_) { audio = null; }
+    }
+    function stopCrackle() {
+      if (!audio) return;
+      const { ctx, gain } = audio;
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+      setTimeout(() => ctx.close(), 500);
+      audio = null;
+    }
+
+    function setPlaying(on) {
+      playing = on;
+      deck.classList.toggle('playing', on);
+      playBtn.setAttribute('aria-pressed', String(on));
+      playLabel.textContent = on ? 'Parar el disco' : 'Pon el disco';
+      playIcon.setAttribute('d', on ? 'M6 5h4v14H6zM14 5h4v14h-4z' : 'M7 4v16l13-8z');
+      clearInterval(trackTimer);
+      if (on) {
+        startCrackle();
+        setTimeout(showTrack, reduceMotion ? 0 : 700);
+        trackTimer = setInterval(showTrack, 4200);
+      } else {
+        stopCrackle();
+        nowPlaying.textContent = 'Silencio. También es música (pregúntale a John Cage).';
+      }
+    }
+    const togglePlay = () => setPlaying(!playing);
+    playBtn.addEventListener('click', togglePlay);
+    $('record').addEventListener('click', togglePlay);
+    $('record').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePlay(); } });
+
+    /* ---------------- Film strip ---------------- */
+    const strip = $('stripTrack');
+    const FRAME_TXT = Array(8).fill('Revelando…');
+    const frames = [...FRAME_TXT, ...FRAME_TXT]; // duplicated for seamless loop
+    frames.forEach((t, i) => {
+      const f = document.createElement('div');
+      f.className = 'frame';
+      f.dataset.n = String((i % FRAME_TXT.length) + 1).padStart(2, '0') + 'A';
+      f.textContent = t;
+      strip.appendChild(f);
+    });
+
+    /* ---------------- Terminal (easter egg) ---------------- */
+    const term = $('term'), out = $('termOut'), input = $('termIn'), body = $('termBody');
+    const LINKEDIN = 'https://www.linkedin.com/in/carlos-javier-m-0b608691/';
+    const hist = [];
+    let histI = 0, greeted = false;
+
+    function print(t = '', cls = '') {
+      const d = document.createElement('div');
+      if (cls) d.className = cls;
+      d.textContent = t;
+      out.appendChild(d);
+      body.scrollTop = body.scrollHeight;
+    }
+    function openTerm() {
+      term.classList.add('open');
+      term.setAttribute('aria-hidden', 'false');
+      if (!greeted) {
+        greeted = true;
+        print('Vaya, has encontrado la trastienda.', 'acc');
+        print("Escribe 'ayuda' para ver qué se puede hacer aquí.", 'dim');
+        print('');
+      }
+      setTimeout(() => input.focus(), 50);
+    }
+    function closeTerm() { term.classList.remove('open'); term.setAttribute('aria-hidden', 'true'); input.blur(); }
+    const toggleTerm = () => (term.classList.contains('open') ? closeTerm() : openTerm());
+
+
+    const CMDS = {
+      ayuda() {
+        [
+          ['quien', 'de qué va esto'],
+          ['disco', 'poner o parar el disco'],
+          ['noir', 'cambiar al modo noir'],
+          ['linkedin', 'abrir LinkedIn'],
+          ['limpiar', 'limpiar la pantalla'],
+          ['salir', 'cerrar la terminal'],
+        ].forEach(([c, d]) => print('  ' + c.padEnd(12) + d));
+        print('');
+        print('Hay alguno más escondido. Los de ciencia ficción lo tenéis fácil.', 'dim');
+      },
+      help() { CMDS.ayuda(); },
+      quien() { print('Rock, punk, clásica, conciertos, fotos, novela negra, ciencia ficción, cómics, IA y software.'); print('El resto, en LinkedIn.', 'dim'); },
+      whoami() { CMDS.quien(); },
+      disco() { togglePlay(); print(playing ? 'Aguja abajo. A todo volumen.' : 'Aguja arriba.', 'ok'); },
+      noir() { noirBtn.click(); print('Hecho. Ponte la gabardina.', 'ok'); },
+      linkedin() { print('Abriendo LinkedIn…', 'ok'); window.open(LINKEDIN, '_blank', 'noopener'); },
+      limpiar() { out.innerHTML = ''; },
+      clear() { CMDS.limpiar(); },
+      salir() { closeTerm(); },
+      exit() { closeTerm(); },
+      // easter eggs
+      '42'() { print('La respuesta a la pregunta fundamental de la vida, el universo y todo lo demás.', 'acc'); print('No te olvides la toalla.', 'dim'); },
+      hal() { print('Lo siento, Dave. Me temo que no puedo hacer eso.', 'err'); },
+      punk() { print('Hey! Ho! Let\'s go!', 'acc'); },
+      sudo() { print('Aquí no hay jefes. Esto es punk.', 'err'); },
+      rm() { print('Nadie borra nada en mi casa.', 'err'); },
+      tears() { print('He visto cosas que vosotros no creeríais…', 'acc'); print('Todos esos momentos se perderán en el tiempo, como lágrimas en la lluvia.', 'dim'); },
+      marlowe() { print('Hasta aquí llega el caso. La cuenta, como siempre, la pago yo.', 'acc'); },
+    };
+
+    function run(raw) {
+      const line = raw.trim();
+      print('visitante:~$ ' + raw, 'cmd');
+      if (!line) return;
+      hist.push(line); histI = hist.length;
+      const cmd = line.split(/\s+/)[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (CMDS[cmd]) CMDS[cmd]();
+      else print("No conozco '" + cmd + "'. Prueba con 'ayuda'.", 'err');
+    }
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { run(input.value); input.value = ''; }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (histI > 0) input.value = hist[--histI]; }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); if (histI < hist.length - 1) input.value = hist[++histI]; else { histI = hist.length; input.value = ''; } }
+      else if (e.key === 'Tab') {
+        e.preventDefault();
+        const m = Object.keys(CMDS).filter((c) => c.startsWith(input.value.trim().toLowerCase()));
+        if (m.length === 1) input.value = m[0];
+        else if (m.length > 1) print(m.join('   '), 'dim');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && term.classList.contains('open')) { closeTerm(); return; }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.code === 'Backquote' || ['º', 'ª', '`', '~'].includes(e.key)) {
+        e.preventDefault();
+        toggleTerm();
+      }
+    });
+    $('termHint').addEventListener('click', toggleTerm);
+    $('termClose').addEventListener('click', closeTerm);
+    body.addEventListener('click', () => { if (!window.getSelection().toString()) input.focus(); });
+  })();
+  </script>
 </body>
 </html>
