@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kafka-peek · Carlos Mena</title>
+  <meta name="description" content="Cómo nació kafka-peek, una herramienta read-only para explorar Kafka." />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    :root { --paper:#f3eee4; --ink:#1b1815; --ink-soft:#5b544b; --rule:#d6ccba; --accent:#c2362b; --serif:'Fraunces',Georgia,serif; --sans:'Inter','Helvetica Neue',Arial,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.6; }
+    .grain { position:fixed; inset:-50%; pointer-events:none; opacity:.07; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    .wrap { width:min(760px,calc(100% - 3rem)); margin:0 auto; }
+    header { border-bottom:1px solid var(--rule); padding:1.5rem 0; }
+    header a { color:var(--ink); font-family:var(--serif); font-size:1.35rem; font-style:italic; text-decoration:none; }
+    article { padding:7rem 0 8rem; }
+    .meta { color:var(--ink-soft); font: .7rem var(--mono); letter-spacing:.1em; text-transform:uppercase; }
+    h1 { font:400 clamp(2.5rem,7vw,4.6rem)/1.03 var(--serif); letter-spacing:-.035em; margin:1rem 0 2.5rem; max-width:12ch; }
+    h1 em { color:var(--accent); }
+    p { color:var(--ink-soft); font:1.15rem/1.7 var(--serif); margin:0 0 1.35rem; }
+    strong { color:var(--ink); font-weight:500; }
+    a { color:var(--accent); text-underline-offset:.18em; }
+    .back { display:inline-block; margin-top:2rem; color:var(--ink-soft); font:.75rem var(--mono); letter-spacing:.08em; text-transform:uppercase; }
+    @media (max-width:600px) { article { padding:4rem 0 5rem; } .wrap { width:min(100% - 2rem,760px); } }
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header><div class="wrap"><a href="index.html">CM<span style="color:var(--accent)">.</span></a></div></header>
+  <main class="wrap">
+    <article>
+      <div class="meta">Entrada 01 · Kafka-peek</div>
+      <h1>Quería mirar Kafka sin <em>pelearme con la interfaz.</em></h1>
+      <p><strong>Apache Kafka</strong> es una plataforma para publicar y leer grandes volúmenes de eventos mediante <em>tópicos</em>: algo parecido a canales donde las aplicaciones dejan mensajes para que otros servicios los consuman. Cuando esos tópicos crecen, encontrar un mensaje concreto puede convertirse en una tarea bastante menos sencilla de lo que parece.</p>
+      <p>Hay herramientas que funcionan, pero no hacen que trabajar con ellas resulte agradable. Durante un tiempo utilicé <a href="https://hub.docker.com/r/kafbat/kafka-ui" target="_blank" rel="noopener noreferrer">Kafbat Kafka UI</a> y también la interfaz de Confluent Cloud para inspeccionar tópicos.</p>
+      <p>El problema aparecía cuando necesitaba encontrar un mensaje concreto dentro de un tópico con muchos datos. Las búsquedas no eran todo lo precisas que necesitaba y, además, podían volverse desesperantemente lentas. A veces parecía que la interfaz había entrado en un bucle infinito. Para una tarea que debería ser simplemente “encuentra este mensaje”, era demasiado esfuerzo.</p>
+      <p>Por eso empecé a construir <strong>kafka-peek</strong>. La idea era bastante sencilla: tener una herramienta rápida para ver qué está pasando y otra forma más precisa de buscar lo que ya sé que estoy buscando. Mis prioridades fueron, en este orden, <strong>precisión, velocidad y una interfaz clara</strong>.</p>
+      <p>La interfaz está separada en dos espacios. En <strong>Live</strong> puedo seguir un tópico en tiempo real con un tail preview, hacer búsquedas rápidas y sencillas, y consultar el consumer lag. En <strong>Export</strong> están las búsquedas más específicas: por una key completa o por un fragmento de la key, por un value completo o por un fragmento del value, además de la posibilidad de hacer rápidamente un dump del tópico.</p>
+      <p>También hay un CLI. No es un añadido de última hora: lo uso para que mi agente de IA pueda pedir cosas como “dame los tres últimos mensajes de este tópico”, “¿este consumer group tiene lag?”, “búscame el mensaje con esta key” o “dame los mensajes de este intervalo de tiempo”. Para ese tipo de tareas, una salida clara y fácil de consumir es mucho más útil que una interfaz que obligue a navegar por varias pantallas.</p>
+      <p>Desde el principio quise que fuese una herramienta <strong>read-only</strong>. Muchos tópicos no son míos, aunque tenga permisos que también permitirían producir mensajes. No quería que una herramienta pensada para mirar pudiera modificar nada por accidente. `kafka-peek` no produce mensajes, no hace commit de offsets y utiliza grupos de consumo efímeros para no interferir con otros consumidores.</p>
+      <p>Lo he publicado como <a href="https://github.com/carlosmena89/kafka-peek" target="_blank" rel="noopener noreferrer">open source en GitHub</a> para que otras personas puedan usarlo. La configuración permite trabajar con distintos brokers y credenciales por entorno, y si alguien encuentra una mejora, será bienvenida. Al final, una herramienta así mejora cuando nace de problemas reales y de la gente que también los encuentra.</p>
+      <a class="back" href="index.html#cuaderno">← Volver al cuaderno</a>
+    </article>
+  </main>
+</body>
+</html>

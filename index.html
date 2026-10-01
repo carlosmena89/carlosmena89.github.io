@@ -484,6 +484,9 @@
     }
     .notes-intro { max-width: 52ch; color: var(--ink-soft); margin: -1.5rem 0 2.5rem; font-family: var(--serif); font-size: 1.1rem; }
 
+    .notes .title a { text-decoration: none; }
+    .notes .title a:hover { color: var(--accent); }
+
     /* ---------- Fotos (film strip) ---------- */
     .strip {
       background: #141414;
@@ -534,8 +537,6 @@
       color: #c9a227;
       opacity: .7;
     }
-    .photos-note { margin-top: 1.4rem; color: var(--ink-soft); font-family: var(--serif); font-style: italic; }
-
     /* ---------- Contacto / footer ---------- */
     .contact h2 { max-width: 22ch; }
     .contact .links { display: flex; gap: 1rem; flex-wrap: wrap; }
@@ -605,6 +606,7 @@
       height: min(400px, 60vh);
       display: flex;
       flex-direction: column;
+      padding: 0;
       background: rgba(14,14,16,.94);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
@@ -729,7 +731,7 @@
             <div class="track"><span class="n">A1</span><span class="ti">Rock &amp; punk</span><span class="d">2:14</span></div>
             <div class="track"><span class="n">A2</span><span class="ti">Música clásica</span><span class="d">47:30</span></div>
             <div class="track"><span class="n">A3</span><span class="ti">Conciertos</span><span class="d">en directo</span></div>
-            <div class="track"><span class="n">A4</span><span class="ti">Fotografía</span><span class="d">1/125 s</span></div>
+             <div class="track"><span class="n">A4</span><span class="ti">Motos y rutas</span><span class="d">en marcha</span></div>
           </div>
 
           <div class="side reveal">
@@ -748,28 +750,17 @@
     <section id="cuaderno">
       <div class="wrap">
         <div class="eyebrow reveal">Cuaderno</div>
-        <h2 class="reveal">Próximamente, <em>por escrito.</em></h2>
-        <p class="notes-intro reveal">Sin fecha de salida, como los buenos discos.</p>
+        <h2 class="reveal">Cuaderno <em>abierto.</em></h2>
+        <p class="notes-intro reveal">Ideas, proyectos y cosas que me rondan la cabeza.</p>
 
         <ul class="notes">
-          <li class="reveal"><span class="tag">01</span><span class="title">Inteligencia artificial</span><span class="soon">Próximamente</span></li>
+          <li class="reveal"><span class="tag">01</span><span class="title"><a href="kafka-peek.html">Kafka-peek: mirar Kafka sin tocar nada</a></span><span class="soon">Nuevo</span></li>
           <li class="reveal"><span class="tag">02</span><span class="title">Desarrollo de software</span><span class="soon">Próximamente</span></li>
           <li class="reveal"><span class="tag">03</span><span class="title">Música</span><span class="soon">Próximamente</span></li>
           <li class="reveal"><span class="tag">04</span><span class="title">Libros y cómics</span><span class="soon">Próximamente</span></li>
         </ul>
-      </div>
-    </section>
 
-    <!-- ===================== FOTOS ===================== -->
-    <section id="fotos">
-      <div class="wrap">
-        <div class="eyebrow reveal">Fotos</div>
-        <h2 class="reveal">Carrete <em>en el cuarto oscuro.</em></h2>
       </div>
-      <div class="strip reveal" aria-label="Carrete de fotos, próximamente">
-        <div class="strip-track" id="stripTrack"></div>
-      </div>
-      <div class="wrap"><p class="photos-note reveal">Revelando. Paciencia: lo bueno tarda, y el químico huele fatal.</p></div>
     </section>
 
     <!-- ===================== CONTACTO ===================== -->
@@ -1074,18 +1065,6 @@
     playBtn.addEventListener('click', togglePlay);
     $('record').addEventListener('click', togglePlay);
     $('record').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePlay(); } });
-
-    /* ---------------- Film strip ---------------- */
-    const strip = $('stripTrack');
-    const FRAME_TXT = Array(8).fill('Revelando…');
-    const frames = [...FRAME_TXT, ...FRAME_TXT]; // duplicated for seamless loop
-    frames.forEach((t, i) => {
-      const f = document.createElement('div');
-      f.className = 'frame';
-      f.dataset.n = String((i % FRAME_TXT.length) + 1).padStart(2, '0') + 'A';
-      f.textContent = t;
-      strip.appendChild(f);
-    });
 
     /* ---------------- Terminal (easter egg) ---------------- */
     const term = $('term'), out = $('termOut'), input = $('termIn'), body = $('termBody');
