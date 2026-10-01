@@ -692,6 +692,7 @@
               <span id="playLabel">Pon el disco</span>
             </button>
             <a class="btn ghost" href="#sobre-mi">Ver la tracklist</a>
+            <button class="btn ghost" id="nextBtn" type="button">Siguiente pista&nbsp;→</button>
           </div>
         </div>
 
@@ -847,12 +848,17 @@
     /* ---------------- Turntable ---------------- */
     // A home recording played through a "worn vinyl" chain built with Web Audio:
     // band-limited EQ, soft saturation, wow & flutter, surface hiss, pops and rumble.
-    // The file is a 26 s excerpt (0:24–0:50 of the original). We loop 0:25–0:49,
-    // i.e. 1.0196 s → 25.0196 s inside the file, with a short crossfade baked in.
-    const TRACK = { src: 'audio/punks-heartbeat.mp3', artist: 'CM', title: "Punk's Heartbeat", loopStart: 1.0196, loopEnd: 25.0196 };
+    const TRACKS = [
+      { src: 'audio/punks-heartbeat.mp3', artist: 'CM', title: "Punk's Heartbeat", loopStart: 1.0196, loopEnd: 25.0196 },
+      { src: 'audio/fallen-4-17.mp3', artist: 'CM', title: 'Fallen', loopStart: 0, loopEnd: 13 },
+    ];
+    const TRANSITION_SECONDS = 2;
+    let trackIndex = 0;
+    const currentTrack = () => TRACKS[trackIndex];
     const deck = $('deck');
     const nowPlaying = $('nowPlaying');
     const playBtn = $('playBtn');
+    const nextBtn = $('nextBtn');
     const playLabel = $('playLabel');
     const playIcon = $('playIcon');
     let playing = false, ctx = null, master = null, surface = null, music = null;
@@ -868,8 +874,8 @@
 
     function showNowPlaying(pos) {
       nowPlaying.innerHTML = '<b></b> — <span class="song"></span> <span class="time"></span>';
-      nowPlaying.querySelector('b').textContent = TRACK.artist;
-      nowPlaying.querySelector('.song').textContent = TRACK.title;
+      nowPlaying.querySelector('b').textContent = currentTrack().artist;
+      nowPlaying.querySelector('.song').textContent = currentTrack().title;
       nowPlaying.querySelector('.time').textContent = '· ' + fmt(pos) + ' / ' + fmt(trackBuffer.duration) + ' ↻';
     }
 
@@ -887,10 +893,10 @@
     function loadTrack() {
       if (trackBuffer) return Promise.resolve(trackBuffer);
       if (!loadingTrack) {
-        loadingTrack = fetch(TRACK.src)
+        loadingTrack = fetch(currentTrack().src)
           .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
           .then((ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej)))
-          .then((buf) => (trackBuffer = makeLoop(buf, TRACK.loopStart, TRACK.loopEnd)))
+          .then((buf) => (trackBuffer = makeLoop(buf, currentTrack().loopStart, currentTrack().loopEnd)))
           .catch((e) => { loadingTrack = null; throw e; });
       }
       return loadingTrack;
@@ -968,7 +974,7 @@
       const t = ctx.currentTime;
       const src = ctx.createBufferSource();
       src.buffer = trackBuffer;
-      src.loop = true;
+      src.loop = false;
 
       // Wow (slow pitch drift) and flutter (fast wobble), in cents
       const wow = ctx.createOscillator(); wow.frequency.value = 0.55;
@@ -986,10 +992,23 @@
 
       const g = ctx.createGain();
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.85, t + 0.9);
+      const remaining = Math.max(0, trackBuffer.duration - from);
+      const fadeIn = Math.min(TRANSITION_SECONDS, remaining / 2);
+      g.gain.linearRampToValueAtTime(0.85, t + fadeIn);
+      if (remaining > TRANSITION_SECONDS) {
+        const fadeOutStart = t + remaining - TRANSITION_SECONDS;
+        g.gain.setValueAtTime(0.85, fadeOutStart);
+        g.gain.linearRampToValueAtTime(0, fadeOutStart + TRANSITION_SECONDS);
+      }
 
       src.connect(hp).connect(mid).connect(lp).connect(sat).connect(g).connect(master);
       src.start(t, from);
+      src.onended = () => {
+        if (!playing || !music || music.src !== src) return;
+        music = null;
+        offset = 0;
+        nextTrack(true);
+      };
       wow.start(t); flutter.start(t);
 
       music = { src, g, wow, flutter };
@@ -1061,7 +1080,26 @@
       }
     }
     const togglePlay = () => setPlaying(!playing);
+    function nextTrack(keepPlaying = playing) {
+      if (music) stopMusic(false);
+      trackIndex = (trackIndex + 1) % TRACKS.length;
+      trackBuffer = null;
+      loadingTrack = null;
+      offset = 0;
+      if (keepPlaying) {
+        setStatus('Cambiando de pista…');
+        loadTrack().then(() => {
+          if (playing && !music) {
+            startMusic(0);
+            tickProgress();
+          }
+        }).catch(() => setStatus('Solo ruido', 'la pista no ha cargado'));
+      } else {
+        nowPlaying.textContent = currentTrack().title + ' · lista para sonar.';
+      }
+    }
     playBtn.addEventListener('click', togglePlay);
+    nextBtn.addEventListener('click', () => nextTrack(playing));
     $('record').addEventListener('click', togglePlay);
     $('record').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePlay(); } });
 
